@@ -1,0 +1,1080 @@
+[
+  {
+    "name": "RICE",
+    "category": "Cereal / Food Grain",
+    "ideal": {
+      "N": 80,
+      "P": 40,
+      "K": 40,
+      "pH": 6.5,
+      "temp": 24,
+      "humidity": 82,
+      "rainfall": 230
+    },
+    "ranges": {
+      "N": [
+        60,
+        120
+      ],
+      "P": [
+        35,
+        60
+      ],
+      "K": [
+        35,
+        50
+      ],
+      "pH": [
+        5.0,
+        7.8
+      ],
+      "temp": [
+        20,
+        32
+      ],
+      "humidity": [
+        70,
+        95
+      ],
+      "rainfall": [
+        150,
+        300
+      ]
+    },
+    "season": "Monsoon / Kharif",
+    "soilType": "Clay / Clay Loam",
+    "irrigation": "High",
+    "pestRisk": "Moderate",
+    "marketTrend": "+12.4%",
+    "description": "Requires standing water and high humidity. Excellent fit for heavy clay soils with poor drainage."
+  },
+  {
+    "name": "MAIZE",
+    "category": "Cereal / Feed",
+    "ideal": {
+      "N": 78,
+      "P": 48,
+      "K": 20,
+      "pH": 6.2,
+      "temp": 22,
+      "humidity": 65,
+      "rainfall": 84
+    },
+    "ranges": {
+      "N": [
+        60,
+        100
+      ],
+      "P": [
+        35,
+        60
+      ],
+      "K": [
+        15,
+        25
+      ],
+      "pH": [
+        5.5,
+        7.5
+      ],
+      "temp": [
+        18,
+        28
+      ],
+      "humidity": [
+        55,
+        75
+      ],
+      "rainfall": [
+        60,
+        110
+      ]
+    },
+    "season": "Kharif / Rabi",
+    "soilType": "Well-drained Loam",
+    "irrigation": "Moderate",
+    "pestRisk": "Low",
+    "marketTrend": "+8.1%",
+    "description": "Versatile cereal crop needing moderate moisture and deep fertile loam rich in nitrogen."
+  },
+  {
+    "name": "CHICKPEA",
+    "category": "Pulse / Legume",
+    "ideal": {
+      "N": 40,
+      "P": 68,
+      "K": 80,
+      "pH": 7.3,
+      "temp": 19,
+      "humidity": 17,
+      "rainfall": 80
+    },
+    "ranges": {
+      "N": [
+        20,
+        60
+      ],
+      "P": [
+        55,
+        80
+      ],
+      "K": [
+        70,
+        90
+      ],
+      "pH": [
+        6.0,
+        8.5
+      ],
+      "temp": [
+        14,
+        24
+      ],
+      "humidity": [
+        10,
+        30
+      ],
+      "rainfall": [
+        60,
+        95
+      ]
+    },
+    "season": "Rabi (Winter)",
+    "soilType": "Sandy Loam to Clay",
+    "irrigation": "Low",
+    "pestRisk": "Low",
+    "marketTrend": "+5.2%",
+    "description": "Dry-climate pulse with atmospheric nitrogen fixing ability. Thrives in cool, dry conditions."
+  },
+  {
+    "name": "KIDNEYBEANS",
+    "category": "Pulse / Legume",
+    "ideal": {
+      "N": 20,
+      "P": 67,
+      "K": 20,
+      "pH": 5.7,
+      "temp": 20,
+      "humidity": 21,
+      "rainfall": 105
+    },
+    "ranges": {
+      "N": [
+        15,
+        35
+      ],
+      "P": [
+        55,
+        80
+      ],
+      "K": [
+        15,
+        25
+      ],
+      "pH": [
+        5.0,
+        6.8
+      ],
+      "temp": [
+        15,
+        26
+      ],
+      "humidity": [
+        15,
+        35
+      ],
+      "rainfall": [
+        80,
+        130
+      ]
+    },
+    "season": "Kharif",
+    "soilType": "Slightly Acidic Loam",
+    "irrigation": "Moderate",
+    "pestRisk": "Moderate",
+    "marketTrend": "+14.8%",
+    "description": "High-value legume sensitive to high nitrogen; requires phosphorus for root development."
+  },
+  {
+    "name": "PIGEONPEAS",
+    "category": "Pulse",
+    "ideal": {
+      "N": 20,
+      "P": 68,
+      "K": 20,
+      "pH": 5.8,
+      "temp": 28,
+      "humidity": 48,
+      "rainfall": 150
+    },
+    "ranges": {
+      "N": [
+        10,
+        30
+      ],
+      "P": [
+        55,
+        80
+      ],
+      "K": [
+        15,
+        25
+      ],
+      "pH": [
+        5.0,
+        7.0
+      ],
+      "temp": [
+        24,
+        33
+      ],
+      "humidity": [
+        35,
+        65
+      ],
+      "rainfall": [
+        100,
+        190
+      ]
+    },
+    "season": "Kharif",
+    "soilType": "Deep Well-Drained Soil",
+    "irrigation": "Low",
+    "pestRisk": "High",
+    "marketTrend": "+9.0%",
+    "description": "Drought-tolerant pulse deep feeder suitable for semi-arid tropics."
+  },
+  {
+    "name": "MOTHBEANS",
+    "category": "Pulse",
+    "ideal": {
+      "N": 21,
+      "P": 48,
+      "K": 20,
+      "pH": 6.8,
+      "temp": 28,
+      "humidity": 53,
+      "rainfall": 51
+    },
+    "ranges": {
+      "N": [
+        10,
+        30
+      ],
+      "P": [
+        35,
+        60
+      ],
+      "K": [
+        15,
+        25
+      ],
+      "pH": [
+        6.0,
+        8.0
+      ],
+      "temp": [
+        24,
+        34
+      ],
+      "humidity": [
+        40,
+        65
+      ],
+      "rainfall": [
+        35,
+        75
+      ]
+    },
+    "season": "Kharif / Summer",
+    "soilType": "Arid / Sandy Soil",
+    "irrigation": "Very Low",
+    "pestRisk": "Low",
+    "marketTrend": "+3.5%",
+    "description": "Extremely drought-resistant crop ideal for arid regions with limited rainfall."
+  },
+  {
+    "name": "MUNGBEAN",
+    "category": "Pulse",
+    "ideal": {
+      "N": 21,
+      "P": 47,
+      "K": 20,
+      "pH": 6.7,
+      "temp": 28,
+      "humidity": 85,
+      "rainfall": 48
+    },
+    "ranges": {
+      "N": [
+        10,
+        30
+      ],
+      "P": [
+        35,
+        60
+      ],
+      "K": [
+        15,
+        25
+      ],
+      "pH": [
+        6.0,
+        7.8
+      ],
+      "temp": [
+        25,
+        32
+      ],
+      "humidity": [
+        75,
+        95
+      ],
+      "rainfall": [
+        35,
+        65
+      ]
+    },
+    "season": "Summer / Kharif",
+    "soilType": "Fertile Loam",
+    "irrigation": "Low",
+    "pestRisk": "Low",
+    "marketTrend": "+6.8%",
+    "description": "Short-duration crop suited for warm, humid weather with light rainfall."
+  },
+  {
+    "name": "BLACKGRAM",
+    "category": "Pulse",
+    "ideal": {
+      "N": 40,
+      "P": 67,
+      "K": 19,
+      "pH": 7.1,
+      "temp": 30,
+      "humidity": 65,
+      "rainfall": 68
+    },
+    "ranges": {
+      "N": [
+        25,
+        55
+      ],
+      "P": [
+        55,
+        80
+      ],
+      "K": [
+        15,
+        25
+      ],
+      "pH": [
+        6.5,
+        8.0
+      ],
+      "temp": [
+        26,
+        35
+      ],
+      "humidity": [
+        55,
+        75
+      ],
+      "rainfall": [
+        50,
+        85
+      ]
+    },
+    "season": "Kharif",
+    "soilType": "Heavy Black Soil",
+    "irrigation": "Low",
+    "pestRisk": "Moderate",
+    "marketTrend": "+11.2%",
+    "description": "Thrives in warm, tropical conditions and heavy moisture-retaining black soils."
+  },
+  {
+    "name": "LENTIL",
+    "category": "Pulse",
+    "ideal": {
+      "N": 19,
+      "P": 68,
+      "K": 19,
+      "pH": 6.9,
+      "temp": 25,
+      "humidity": 65,
+      "rainfall": 45
+    },
+    "ranges": {
+      "N": [
+        10,
+        30
+      ],
+      "P": [
+        55,
+        80
+      ],
+      "K": [
+        15,
+        25
+      ],
+      "pH": [
+        6.0,
+        7.8
+      ],
+      "temp": [
+        18,
+        30
+      ],
+      "humidity": [
+        55,
+        75
+      ],
+      "rainfall": [
+        35,
+        55
+      ]
+    },
+    "season": "Rabi",
+    "soilType": "Loam / Silt Loam",
+    "irrigation": "Low",
+    "pestRisk": "Low",
+    "marketTrend": "+4.1%",
+    "description": "Cool-season legume requiring minimal rainfall and moderate potassium."
+  },
+  {
+    "name": "POMEGRANATE",
+    "category": "Fruit",
+    "ideal": {
+      "N": 19,
+      "P": 19,
+      "K": 40,
+      "pH": 6.4,
+      "temp": 22,
+      "humidity": 90,
+      "rainfall": 108
+    },
+    "ranges": {
+      "N": [
+        10,
+        30
+      ],
+      "P": [
+        10,
+        30
+      ],
+      "K": [
+        35,
+        50
+      ],
+      "pH": [
+        5.5,
+        7.5
+      ],
+      "temp": [
+        18,
+        26
+      ],
+      "humidity": [
+        80,
+        98
+      ],
+      "rainfall": [
+        90,
+        130
+      ]
+    },
+    "season": "Perennial / Annual",
+    "soilType": "Well-drained Sandy Clay",
+    "irrigation": "Moderate",
+    "pestRisk": "Low",
+    "marketTrend": "+18.5%",
+    "description": "High-value fruit crop requiring dry atmospheric conditions during fruit ripening."
+  },
+  {
+    "name": "BANANA",
+    "category": "Fruit",
+    "ideal": {
+      "N": 100,
+      "P": 82,
+      "K": 50,
+      "pH": 6.0,
+      "temp": 27,
+      "humidity": 80,
+      "rainfall": 104
+    },
+    "ranges": {
+      "N": [
+        80,
+        120
+      ],
+      "P": [
+        70,
+        95
+      ],
+      "K": [
+        45,
+        60
+      ],
+      "pH": [
+        5.2,
+        7.0
+      ],
+      "temp": [
+        24,
+        31
+      ],
+      "humidity": [
+        70,
+        90
+      ],
+      "rainfall": [
+        90,
+        125
+      ]
+    },
+    "season": "Year-Round",
+    "soilType": "Rich Alluvial Soil",
+    "irrigation": "High",
+    "pestRisk": "Moderate",
+    "marketTrend": "+7.3%",
+    "description": "Heavy nutrient feeder requiring high Nitrogen, Phosphorus, and abundant moisture."
+  },
+  {
+    "name": "MANGO",
+    "category": "Fruit",
+    "ideal": {
+      "N": 20,
+      "P": 27,
+      "K": 30,
+      "pH": 5.7,
+      "temp": 31,
+      "humidity": 50,
+      "rainfall": 95
+    },
+    "ranges": {
+      "N": [
+        10,
+        30
+      ],
+      "P": [
+        15,
+        38
+      ],
+      "K": [
+        20,
+        40
+      ],
+      "pH": [
+        4.8,
+        6.8
+      ],
+      "temp": [
+        27,
+        36
+      ],
+      "humidity": [
+        40,
+        60
+      ],
+      "rainfall": [
+        80,
+        115
+      ]
+    },
+    "season": "Perennial",
+    "soilType": "Deep Loamy Soil",
+    "irrigation": "Low",
+    "pestRisk": "High",
+    "marketTrend": "+15.0%",
+    "description": "Tropical fruit tree requiring warm dry spells for flowering and good drainage."
+  },
+  {
+    "name": "GRAPES",
+    "category": "Fruit",
+    "ideal": {
+      "N": 23,
+      "P": 133,
+      "K": 200,
+      "pH": 6.0,
+      "temp": 24,
+      "humidity": 82,
+      "rainfall": 70
+    },
+    "ranges": {
+      "N": [
+        10,
+        35
+      ],
+      "P": [
+        120,
+        145
+      ],
+      "K": [
+        190,
+        205
+      ],
+      "pH": [
+        5.2,
+        7.0
+      ],
+      "temp": [
+        18,
+        30
+      ],
+      "humidity": [
+        75,
+        90
+      ],
+      "rainfall": [
+        55,
+        85
+      ]
+    },
+    "season": "Perennial",
+    "soilType": "Gravelly Sandy Loam",
+    "irrigation": "Moderate",
+    "pestRisk": "High",
+    "marketTrend": "+22.1%",
+    "description": "High Potassium and Phosphorus demand. Excellent returns in sunny climates with controlled watering."
+  },
+  {
+    "name": "WATERMELON",
+    "category": "Fruit / Cucurbit",
+    "ideal": {
+      "N": 99,
+      "P": 18,
+      "K": 50,
+      "pH": 6.5,
+      "temp": 25,
+      "humidity": 85,
+      "rainfall": 50
+    },
+    "ranges": {
+      "N": [
+        80,
+        120
+      ],
+      "P": [
+        10,
+        25
+      ],
+      "K": [
+        45,
+        55
+      ],
+      "pH": [
+        6.0,
+        7.2
+      ],
+      "temp": [
+        22,
+        29
+      ],
+      "humidity": [
+        80,
+        92
+      ],
+      "rainfall": [
+        40,
+        60
+      ]
+    },
+    "season": "Summer",
+    "soilType": "Sandy / Sandy Loam",
+    "irrigation": "Moderate",
+    "pestRisk": "Low",
+    "marketTrend": "+9.6%",
+    "description": "Warm-season crop thriving in sandy soil with high Nitrogen and warm sunshine."
+  },
+  {
+    "name": "MUSKMELON",
+    "category": "Fruit / Cucurbit",
+    "ideal": {
+      "N": 100,
+      "P": 18,
+      "K": 50,
+      "pH": 6.3,
+      "temp": 28,
+      "humidity": 92,
+      "rainfall": 24
+    },
+    "ranges": {
+      "N": [
+        80,
+        120
+      ],
+      "P": [
+        10,
+        25
+      ],
+      "K": [
+        45,
+        55
+      ],
+      "pH": [
+        5.8,
+        7.0
+      ],
+      "temp": [
+        25,
+        32
+      ],
+      "humidity": [
+        88,
+        96
+      ],
+      "rainfall": [
+        15,
+        35
+      ]
+    },
+    "season": "Summer",
+    "soilType": "Well-drained Sandy",
+    "irrigation": "Low",
+    "pestRisk": "Moderate",
+    "marketTrend": "+10.2%",
+    "description": "Requires very low rainfall and warm temperatures to develop high sugar content."
+  },
+  {
+    "name": "APPLE",
+    "category": "Fruit",
+    "ideal": {
+      "N": 20,
+      "P": 134,
+      "K": 200,
+      "pH": 5.9,
+      "temp": 22,
+      "humidity": 92,
+      "rainfall": 112
+    },
+    "ranges": {
+      "N": [
+        10,
+        30
+      ],
+      "P": [
+        120,
+        145
+      ],
+      "K": [
+        190,
+        205
+      ],
+      "pH": [
+        5.5,
+        6.5
+      ],
+      "temp": [
+        18,
+        25
+      ],
+      "humidity": [
+        88,
+        96
+      ],
+      "rainfall": [
+        100,
+        125
+      ]
+    },
+    "season": "Temperate",
+    "soilType": "Deep Silty Loam",
+    "irrigation": "Moderate",
+    "pestRisk": "Moderate",
+    "marketTrend": "+16.3%",
+    "description": "Temperate fruit crop requiring rich Potassium/Phosphorus and moderate chilling hours."
+  },
+  {
+    "name": "ORANGE",
+    "category": "Fruit / Citrus",
+    "ideal": {
+      "N": 19,
+      "P": 16,
+      "K": 10,
+      "pH": 7.0,
+      "temp": 23,
+      "humidity": 92,
+      "rainfall": 110
+    },
+    "ranges": {
+      "N": [
+        10,
+        30
+      ],
+      "P": [
+        10,
+        25
+      ],
+      "K": [
+        5,
+        15
+      ],
+      "pH": [
+        6.0,
+        8.0
+      ],
+      "temp": [
+        18,
+        28
+      ],
+      "humidity": [
+        88,
+        96
+      ],
+      "rainfall": [
+        95,
+        125
+      ]
+    },
+    "season": "Subtropical",
+    "soilType": "Well-aerated Loam",
+    "irrigation": "Moderate",
+    "pestRisk": "Low",
+    "marketTrend": "+13.7%",
+    "description": "Subtropical citrus needing high humidity, neutral soil pH, and well-distributed rain."
+  },
+  {
+    "name": "PAPAYA",
+    "category": "Fruit",
+    "ideal": {
+      "N": 50,
+      "P": 59,
+      "K": 50,
+      "pH": 6.7,
+      "temp": 33,
+      "humidity": 92,
+      "rainfall": 142
+    },
+    "ranges": {
+      "N": [
+        35,
+        65
+      ],
+      "P": [
+        45,
+        70
+      ],
+      "K": [
+        45,
+        55
+      ],
+      "pH": [
+        6.0,
+        7.5
+      ],
+      "temp": [
+        28,
+        38
+      ],
+      "humidity": [
+        88,
+        96
+      ],
+      "rainfall": [
+        120,
+        165
+      ]
+    },
+    "season": "Tropical",
+    "soilType": "Rich Well-drained Loam",
+    "irrigation": "High",
+    "pestRisk": "Moderate",
+    "marketTrend": "+19.0%",
+    "description": "Fast-growing tropical crop requiring warm temperatures, uniform moisture, and rich soil."
+  },
+  {
+    "name": "COCONUT",
+    "category": "Plantation Crop",
+    "ideal": {
+      "N": 22,
+      "P": 17,
+      "K": 30,
+      "pH": 5.9,
+      "temp": 27,
+      "humidity": 94,
+      "rainfall": 175
+    },
+    "ranges": {
+      "N": [
+        10,
+        35
+      ],
+      "P": [
+        10,
+        25
+      ],
+      "K": [
+        20,
+        40
+      ],
+      "pH": [
+        5.0,
+        7.0
+      ],
+      "temp": [
+        24,
+        31
+      ],
+      "humidity": [
+        90,
+        98
+      ],
+      "rainfall": [
+        140,
+        220
+      ]
+    },
+    "season": "Coastal Tropical",
+    "soilType": "Coastal Sand / Alluvial",
+    "irrigation": "High",
+    "pestRisk": "Low",
+    "marketTrend": "+6.5%",
+    "description": "Perennial palm favoring high humidity, warm sea breezes, and abundant rainfall."
+  },
+  {
+    "name": "COTTON",
+    "category": "Commercial Fiber",
+    "ideal": {
+      "N": 117,
+      "P": 46,
+      "K": 19,
+      "pH": 6.9,
+      "temp": 23,
+      "humidity": 79,
+      "rainfall": 80
+    },
+    "ranges": {
+      "N": [
+        100,
+        135
+      ],
+      "P": [
+        35,
+        60
+      ],
+      "K": [
+        15,
+        25
+      ],
+      "pH": [
+        6.0,
+        8.0
+      ],
+      "temp": [
+        20,
+        27
+      ],
+      "humidity": [
+        70,
+        88
+      ],
+      "rainfall": [
+        60,
+        100
+      ]
+    },
+    "season": "Kharif",
+    "soilType": "Deep Black Cotton Soil",
+    "irrigation": "Moderate",
+    "pestRisk": "High",
+    "marketTrend": "+17.8%",
+    "description": "High Nitrogen cash crop thriving in deep moisture-retaining black clay soils."
+  },
+  {
+    "name": "JUTE",
+    "category": "Commercial Fiber",
+    "ideal": {
+      "N": 78,
+      "P": 46,
+      "K": 40,
+      "pH": 6.7,
+      "temp": 25,
+      "humidity": 79,
+      "rainfall": 175
+    },
+    "ranges": {
+      "N": [
+        60,
+        95
+      ],
+      "P": [
+        35,
+        60
+      ],
+      "K": [
+        35,
+        50
+      ],
+      "pH": [
+        6.0,
+        7.5
+      ],
+      "temp": [
+        22,
+        30
+      ],
+      "humidity": [
+        70,
+        88
+      ],
+      "rainfall": [
+        150,
+        205
+      ]
+    },
+    "season": "Monsoon",
+    "soilType": "New Alluvial Soil",
+    "irrigation": "High",
+    "pestRisk": "Low",
+    "marketTrend": "+14.2%",
+    "description": "Golden fiber requiring warm, humid climate and heavy seasonal rainfall."
+  },
+  {
+    "name": "COFFEE",
+    "category": "Plantation / Cash Crop",
+    "ideal": {
+      "N": 101,
+      "P": 28,
+      "K": 30,
+      "pH": 6.8,
+      "temp": 25,
+      "humidity": 58,
+      "rainfall": 158
+    },
+    "ranges": {
+      "N": [
+        85,
+        120
+      ],
+      "P": [
+        15,
+        40
+      ],
+      "K": [
+        20,
+        40
+      ],
+      "pH": [
+        6.0,
+        7.5
+      ],
+      "temp": [
+        22,
+        28
+      ],
+      "humidity": [
+        50,
+        68
+      ],
+      "rainfall": [
+        130,
+        185
+      ]
+    },
+    "season": "Highland Shade",
+    "soilType": "Volcanic / Rich Forest Loam",
+    "irrigation": "Moderate",
+    "pestRisk": "Moderate",
+    "marketTrend": "+24.5%",
+    "description": "Highland cash crop preferring shade, rich organic soil, and generous rainfall."
+  }
+]

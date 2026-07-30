@@ -1,0 +1,11 @@
+Step 1: Install Required Dependencies
+Make sure you have Flask, scikit-learn, numpy, and pandas installed:
+pip install flask scikit-learn numpy pandas
+
+Step 2: Start the Server
+Run the Flask server script:
+python server.py
+
+Step 3: Access the Web Interface
+Once started, open your web browser and navigate to:
+http://127.0.0.1:5000/

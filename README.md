@@ -153,19 +153,22 @@ The trained model predicts the most suitable crop based on soil nutrients and cl
 
 ### Home Page
 
-> Add screenshot here
+<img width="1917" height="910" alt="image" src="https://github.com/user-attachments/assets/c7b97b16-d399-48f3-9af7-31b242db4eb2" />
+
 
 ---
 
 ### Prediction Result
 
-> Add screenshot here
+<img width="1917" height="911" alt="image" src="https://github.com/user-attachments/assets/56c51f3e-4d6f-45f7-aacc-b0596be39e44" />
+
 
 ---
 
 ### Soil Analytics
 
-> Add screenshot here
+<img width="1917" height="907" alt="image" src="https://github.com/user-attachments/assets/773f02ad-06b1-4a38-8b19-e4a6a57b76fb" />
+
 
 ---
 
@@ -187,18 +190,14 @@ The trained model predicts the most suitable crop based on soil nutrients and cl
 
 MCA Student | AI & Machine Learning Enthusiast
 
-GitHub: https://github.com/yourusername
+GitHub: [https://github.com/yashiscoder]
 
-LinkedIn: https://linkedin.com/in/yourprofile
+Portfolio: [https://yashiscoder.github.io/Hii/]
+
+LinkedIn: [https://linkedin.com/in/kumawatyash]
 
 ---
 
 ## ⭐ Support
 
 If you found this project useful, please consider giving it a ⭐ on GitHub.
-
----
-
-## 📄 License
-
-This project is licensed under the MIT License.

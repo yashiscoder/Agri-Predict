@@ -87,7 +87,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
         } catch (e) {
-            console.log("Standalone mode: Local agronomy fallback engine active");
+            console.error("Backend status check failed: Cannot reach Python .pkl model server.", e);
         }
     }
 
@@ -223,22 +223,19 @@ document.addEventListener('DOMContentLoaded', () => {
                         renderPredictionResult(result, inputData);
                     }
                     return;
+                } else {
+                    throw new Error(apiResult.error || "Failed to get prediction from ML model");
                 }
+            } else {
+                const errData = await response.json().catch(() => ({}));
+                throw new Error(errData.error || `Server returned HTTP ${response.status}`);
             }
         } catch (err) {
-            console.warn("Python backend API offline, falling back to client-side engine:", err);
-        }
-
-        // Fallback to local matching algorithm using cached cropDataset
-        const result = localPredictCropFallback(inputData);
-        if (animate && recommendBtn) {
-            setTimeout(() => {
-                renderPredictionResult(result, inputData);
+            console.error("Prediction Error:", err);
+            if (animate && recommendBtn) {
                 resetRecommendBtn();
-                showToast(`Agronomy Fallback: ${result.topCrop.name} (${result.confidenceScore}% Fit)`);
-            }, 600);
-        } else {
-            renderPredictionResult(result, inputData);
+            }
+            showToast(`❌ Prediction Error: ${err.message || 'Unable to connect to Python .pkl model server.'}`);
         }
     }
 
@@ -309,68 +306,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function localPredictCropFallback(input) {
-        const N = parseFloat(input.N) || 0;
-        const P = parseFloat(input.P) || 0;
-        const K = parseFloat(input.K) || 0;
-        const pH = parseFloat(input.pH) || 7.0;
-        const temp = parseFloat(input.temp) || 25;
-        const humidity = parseFloat(input.humidity) || 60;
-        const rainfall = parseFloat(input.rainfall) || 100;
 
-        const weights = { N: 0.15, P: 0.15, K: 0.15, pH: 0.10, temp: 0.15, humidity: 0.10, rainfall: 0.20 };
-        const datasetToUse = cropDataset.length > 0 ? cropDataset : [];
-        
-        const scoredCrops = datasetToUse.map(crop => {
-            let totalScore = 0;
-            Object.keys(weights).forEach(factor => {
-                const val = { N, P, K, pH, temp, humidity, rainfall }[factor];
-                const ideal = crop.ideal[factor];
-                const range = crop.ranges[factor];
-                const weight = weights[factor];
-                let factorScore = 1.0;
-                if (val >= range[0] && val <= range[1]) {
-                    const maxDev = Math.max(ideal - range[0], range[1] - ideal) || 1;
-                    const dev = Math.abs(val - ideal);
-                    factorScore = 1.0 - (dev / maxDev) * 0.25;
-                } else {
-                    const distance = val < range[0] ? (range[0] - val) : (val - range[1]);
-                    const span = range[1] - range[0] || 10;
-                    factorScore = Math.max(0.05, 0.75 * Math.exp(-1.5 * (distance / span)));
-                }
-                totalScore += factorScore * weight;
-            });
-            const confidence = Math.min(99.4, Math.max(42.0, (totalScore * 100)));
-            return {
-                ...crop,
-                score: totalScore,
-                confidenceScore: confidence.toFixed(1)
-            };
-        });
-
-        if (scoredCrops.length === 0) {
-            const defaultCrop = {
-                name: "RICE",
-                category: "Cereal / Food Grain",
-                ideal: { N: 80, P: 40, K: 40, pH: 6.5, temp: 24, humidity: 82, rainfall: 230 },
-                ranges: { N: [60, 120], P: [35, 60], K: [35, 50], pH: [5.0, 7.8], temp: [20, 32], humidity: [70, 95], rainfall: [150, 300] },
-                season: "Monsoon / Kharif",
-                soilType: "Clay / Clay Loam",
-                irrigation: "High",
-                pestRisk: "Moderate",
-                marketTrend: "+12.4%",
-                description: "Requires standing water and high humidity."
-            };
-            return { topCrop: defaultCrop, alternatives: [], confidenceScore: "95.0" };
-        }
-
-        scoredCrops.sort((a, b) => b.score - a.score);
-        return {
-            topCrop: scoredCrops[0],
-            alternatives: scoredCrops.slice(1, 4),
-            confidenceScore: scoredCrops[0].confidenceScore
-        };
-    }
 
     function updateDynamicProTip(topCrop = null) {
         const inputData = getInputValues();

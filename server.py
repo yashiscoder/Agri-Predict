@@ -63,7 +63,7 @@ def get_status():
     return jsonify({
         "status": "online",
         "model_file": MODEL_FILE or "None",
-        "ml_engine": "Scikit-Learn Random Forest (.pkl)" if MODEL_OBJ else "Fallback Agronomy Engine"
+        "ml_engine": "Scikit-Learn Random Forest (.pkl)" if MODEL_OBJ else "No Model Loaded"
     })
 
 @app.route('/api/crops', methods=['GET'])

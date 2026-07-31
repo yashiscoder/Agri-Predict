@@ -59,12 +59,6 @@ def add_cors_headers(response):
 def index():
     return send_from_directory('.', 'index.html')
 
-@app.route('/<path:path>', methods=['GET'])
-def serve_static(path):
-    if os.path.exists(path):
-        return send_from_directory('.', path)
-    return send_from_directory('.', 'index.html')
-
 @app.route('/api/status', methods=['GET', 'OPTIONS'])
 def get_status():
     if request.method == 'OPTIONS':
@@ -167,6 +161,13 @@ def predict():
     except Exception as e:
         print(f"Error in prediction endpoint: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
+
+# Catch-all static route MUST come LAST to prevent matching API routes
+@app.route('/<path:path>', methods=['GET'])
+def serve_static(path):
+    if os.path.exists(path):
+        return send_from_directory('.', path)
+    return send_from_directory('.', 'index.html')
 
 
 if __name__ == "__main__":

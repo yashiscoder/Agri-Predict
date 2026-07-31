@@ -48,26 +48,37 @@ def find_and_load_model():
 # Initial model load
 find_and_load_model()
 
+@app.after_request
+def add_cors_headers(response):
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
+    response.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
+    return response
+
 @app.route('/')
 def index():
     return send_from_directory('.', 'index.html')
 
-@app.route('/<path:path>')
+@app.route('/<path:path>', methods=['GET'])
 def serve_static(path):
     if os.path.exists(path):
         return send_from_directory('.', path)
     return send_from_directory('.', 'index.html')
 
-@app.route('/api/status', methods=['GET'])
+@app.route('/api/status', methods=['GET', 'OPTIONS'])
 def get_status():
+    if request.method == 'OPTIONS':
+        return jsonify({"status": "ok"}), 200
     return jsonify({
         "status": "online",
         "model_file": MODEL_FILE or "None",
         "ml_engine": "Scikit-Learn Random Forest (.pkl)" if MODEL_OBJ else "No Model Loaded"
     })
 
-@app.route('/api/crops', methods=['GET'])
+@app.route('/api/crops', methods=['GET', 'OPTIONS'])
 def get_crops():
+    if request.method == 'OPTIONS':
+        return jsonify({"status": "ok"}), 200
     return jsonify(CROPS_DATASET)
 
 def find_crop_profile(crop_name):
@@ -77,8 +88,10 @@ def find_crop_profile(crop_name):
             return crop
     return None
 
-@app.route('/api/predict', methods=['POST'])
+@app.route('/api/predict', methods=['POST', 'OPTIONS'])
 def predict():
+    if request.method == 'OPTIONS':
+        return jsonify({"status": "ok"}), 200
     try:
         data = request.get_json() or {}
         

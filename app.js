@@ -56,6 +56,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let historyLogs = JSON.parse(localStorage.getItem('agripredict_history') || '[]');
     let cropDataset = [];
 
+    const API_BASE = window.location.hostname.includes('onrender.com') || window.location.origin.includes('localhost') || window.location.origin.includes('127.0.0.1') ? '' : 'https://agri-predict-n3fa.onrender.com';
+
     // Initialize Canvas Weather Animation & ML Status Check
     initWeatherCanvas();
     checkMlBackendStatus();
@@ -63,7 +65,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function loadCropsDataset() {
         try {
-            const res = await fetch('/api/crops');
+            const res = await fetch(`${API_BASE}/api/crops`);
             if (res.ok) {
                 cropDataset = await res.json();
                 renderCropGuide();
@@ -77,7 +79,7 @@ document.addEventListener('DOMContentLoaded', () => {
     async function checkMlBackendStatus() {
         const badge = document.getElementById('mlModelBadge');
         try {
-            const res = await fetch('/api/status');
+            const res = await fetch(`${API_BASE}/api/status`);
             if (res.ok) {
                 const data = await res.json();
                 if (badge && data.model_file && data.model_file !== 'None') {
@@ -190,7 +192,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         try {
-            const response = await fetch('/api/predict', {
+            const response = await fetch(`${API_BASE}/api/predict`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(inputData)

@@ -9,8 +9,10 @@ import pickle
 import json
 import numpy as np
 from flask import Flask, request, jsonify, send_from_directory
+from flask_cors import CORS
 
 app = Flask(__name__, static_folder='.')
+CORS(app)
 
 MODEL_FILE = None
 MODEL_OBJ = None

@@ -56,7 +56,9 @@ document.addEventListener('DOMContentLoaded', () => {
     let historyLogs = JSON.parse(localStorage.getItem('agripredict_history') || '[]');
     let cropDataset = [];
 
-    const API_BASE = window.location.hostname.includes('onrender.com') || window.location.origin.includes('localhost') || window.location.origin.includes('127.0.0.1') ? '' : 'https://agri-predict-n3fa.onrender.com';
+    const API_BASE = (window.location.hostname.includes('localhost') || window.location.hostname.includes('127.0.0.1'))
+        ? '' 
+        : 'https://agri-predict-n3fa.onrender.com';
 
     // Initialize Canvas Weather Animation & ML Status Check
     initWeatherCanvas();

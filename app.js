@@ -1,9 +1,5 @@
-/**
- * AgriPredict Application UI Handler & Interactivity (Stitch Design System + Python .pkl ML Model)
- */
-
 document.addEventListener('DOMContentLoaded', () => {
-    // 1. DOM Element Bindings
+    // element blendding 
     const sliderN = document.getElementById('sliderN');
     const sliderP = document.getElementById('sliderP');
     const sliderK = document.getElementById('sliderK');
@@ -57,7 +53,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let cropDataset = [];
 
     const API_BASE = (window.location.hostname.includes('localhost') || window.location.hostname.includes('127.0.0.1'))
-        ? '' 
+        ? ''
         : 'https://agri-predict-n3fa.onrender.com';
 
     // Initialize Canvas Weather Animation & ML Status Check
@@ -77,7 +73,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Check ML Backend API Status
+    // api check
     async function checkMlBackendStatus() {
         const badge = document.getElementById('mlModelBadge');
         try {
@@ -162,11 +158,11 @@ document.addEventListener('DOMContentLoaded', () => {
             sliderHumidity.value = 82;
             sliderRainfall.value = 230;
             syncSliderDisplays();
-            
+
             if (resultsCard) resultsCard.classList.add('hidden');
             if (resultsPlaceholder) resultsPlaceholder.classList.remove('hidden');
             if (alternativesSection) alternativesSection.classList.add('hidden');
-            
+
             showToast('Form reset to default baseline parameters');
         });
     }
@@ -283,19 +279,19 @@ document.addEventListener('DOMContentLoaded', () => {
             if (result.alternatives && result.alternatives.length > 0) {
                 alternativesSection.classList.remove('hidden');
                 alternativesList.innerHTML = result.alternatives.map(alt => `
-                    <div class="glass-card p-md rounded-xl flex items-center justify-between hover:scale-[1.02] transition-transform">
-                        <div class="flex items-center gap-md">
-                            <div class="w-12 h-12 rounded-full bg-secondary/10 text-secondary flex items-center justify-center font-bold text-sm border border-secondary/20">
-                                ${alt.confidenceScore}%
-                            </div>
-                            <div>
-                                <h5 class="font-headline-md text-headline-md font-bold text-primary">${alt.name}</h5>
-                                <p class="text-xs text-on-surface-variant">${alt.category || 'Agricultural Crop'}</p>
-                            </div>
+                <div class="glass-card p-md rounded-xl flex items-center justify-between hover:scale-[1.02] transition-transform">
+                    <div class="flex items-center gap-md">
+                        <div class="w-12 h-12 rounded-full bg-secondary/10 text-secondary flex items-center justify-center font-bold text-sm border border-secondary/20">
+                            ${alt.confidenceScore}%
                         </div>
-                        <span class="text-xs font-semibold text-secondary px-3 py-1 bg-secondary-fixed rounded-full">${alt.season || 'Seasonal'}</span>
+                        <div>
+                            <h5 class="font-headline-md text-headline-md font-bold text-primary">${alt.name}</h5>
+                            <p class="text-xs text-on-surface-variant">${alt.category || 'Agricultural Crop'}</p>
+                        </div>
                     </div>
-                `).join('');
+                    <span class="text-xs font-semibold text-secondary px-3 py-1 bg-secondary-fixed rounded-full">${alt.season || 'Seasonal'}</span>
+                </div>
+            `).join('');
             } else {
                 alternativesSection.classList.add('hidden');
             }
@@ -508,15 +504,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         tableBody.innerHTML = historyLogs.map(log => `
-            <tr class="hover:bg-surface-container-low/50 transition-colors">
-                <td class="py-3 px-4 font-mono text-xs text-on-surface-variant">${log.timestamp}</td>
-                <td class="py-3 px-4 font-bold text-primary">${log.crop}</td>
-                <td class="py-3 px-4"><span class="px-2.5 py-1 rounded-full bg-secondary-fixed text-primary font-bold text-xs">${log.confidence}% Fit</span></td>
-                <td class="py-3 px-4 text-xs font-medium">N:${log.inputs.N} P:${log.inputs.P} K:${log.inputs.K}</td>
-                <td class="py-3 px-4 text-xs font-medium">${log.inputs.pH}</td>
-                <td class="py-3 px-4 text-xs text-on-surface-variant">${log.inputs.temp}°C / ${log.inputs.humidity}% / ${log.inputs.rainfall}mm</td>
-            </tr>
-        `).join('');
+        <tr class="hover:bg-surface-container-low/50 transition-colors">
+            <td class="py-3 px-4 font-mono text-xs text-on-surface-variant">${log.timestamp}</td>
+            <td class="py-3 px-4 font-bold text-primary">${log.crop}</td>
+            <td class="py-3 px-4"><span class="px-2.5 py-1 rounded-full bg-secondary-fixed text-primary font-bold text-xs">${log.confidence}% Fit</span></td>
+            <td class="py-3 px-4 text-xs font-medium">N:${log.inputs.N} P:${log.inputs.P} K:${log.inputs.K}</td>
+            <td class="py-3 px-4 text-xs font-medium">${log.inputs.pH}</td>
+            <td class="py-3 px-4 text-xs text-on-surface-variant">${log.inputs.temp}°C / ${log.inputs.humidity}% / ${log.inputs.rainfall}mm</td>
+        </tr>
+    `).join('');
     }
 
     // Export CSV Handler
@@ -549,47 +545,47 @@ document.addEventListener('DOMContentLoaded', () => {
         const grid = document.getElementById('cropCatalogGrid');
         if (!grid) return;
 
-        const filtered = cropDataset.filter(c => 
+        const filtered = cropDataset.filter(c =>
             c.name.toLowerCase().includes(filterText.toLowerCase()) ||
             c.category.toLowerCase().includes(filterText.toLowerCase()) ||
             c.soilType.toLowerCase().includes(filterText.toLowerCase())
         );
 
         grid.innerHTML = filtered.map(crop => `
-            <div class="glass-card p-md rounded-xl flex flex-col justify-between hover:scale-[1.01] transition-transform">
-                <div>
-                    <div class="flex justify-between items-start mb-2">
-                        <h4 class="font-headline-md text-headline-md font-bold text-primary">${crop.name}</h4>
-                        <span class="text-xs px-2.5 py-1 bg-tertiary-fixed text-primary font-bold rounded-full">${crop.category}</span>
-                    </div>
-                    <p class="text-xs text-on-surface-variant mb-4">${crop.description}</p>
-                    
-                    <div class="grid grid-cols-2 gap-2 text-xs mb-4">
-                        <div class="bg-surface-container-low p-2 rounded">
-                            <span class="text-outline block">Ideal N-P-K</span>
-                            <span class="font-bold text-primary">${crop.ideal.N}-${crop.ideal.P}-${crop.ideal.K}</span>
-                        </div>
-                        <div class="bg-surface-container-low p-2 rounded">
-                            <span class="text-outline block">Ideal pH</span>
-                            <span class="font-bold text-primary">${crop.ideal.pH}</span>
-                        </div>
-                        <div class="bg-surface-container-low p-2 rounded">
-                            <span class="text-outline block">Temp & Humidity</span>
-                            <span class="font-bold text-primary">${crop.ideal.temp}°C / ${crop.ideal.humidity}%</span>
-                        </div>
-                        <div class="bg-surface-container-low p-2 rounded">
-                            <span class="text-outline block">Rainfall</span>
-                            <span class="font-bold text-primary">${crop.ideal.rainfall} mm</span>
-                        </div>
-                    </div>
+        <div class="glass-card p-md rounded-xl flex flex-col justify-between hover:scale-[1.01] transition-transform">
+            <div>
+                <div class="flex justify-between items-start mb-2">
+                    <h4 class="font-headline-md text-headline-md font-bold text-primary">${crop.name}</h4>
+                    <span class="text-xs px-2.5 py-1 bg-tertiary-fixed text-primary font-bold rounded-full">${crop.category}</span>
                 </div>
-
-                <div class="border-t border-outline-variant/30 pt-3 flex justify-between items-center text-xs">
-                    <span class="text-on-surface-variant font-medium">🌱 ${crop.soilType}</span>
-                    <span class="font-bold text-secondary">${crop.season}</span>
+                <p class="text-xs text-on-surface-variant mb-4">${crop.description}</p>
+                
+                <div class="grid grid-cols-2 gap-2 text-xs mb-4">
+                    <div class="bg-surface-container-low p-2 rounded">
+                        <span class="text-outline block">Ideal N-P-K</span>
+                        <span class="font-bold text-primary">${crop.ideal.N}-${crop.ideal.P}-${crop.ideal.K}</span>
+                    </div>
+                    <div class="bg-surface-container-low p-2 rounded">
+                        <span class="text-outline block">Ideal pH</span>
+                        <span class="font-bold text-primary">${crop.ideal.pH}</span>
+                    </div>
+                    <div class="bg-surface-container-low p-2 rounded">
+                        <span class="text-outline block">Temp & Humidity</span>
+                        <span class="font-bold text-primary">${crop.ideal.temp}°C / ${crop.ideal.humidity}%</span>
+                    </div>
+                    <div class="bg-surface-container-low p-2 rounded">
+                        <span class="text-outline block">Rainfall</span>
+                        <span class="font-bold text-primary">${crop.ideal.rainfall} mm</span>
+                    </div>
                 </div>
             </div>
-        `).join('');
+
+            <div class="border-t border-outline-variant/30 pt-3 flex justify-between items-center text-xs">
+                <span class="text-on-surface-variant font-medium">🌱 ${crop.soilType}</span>
+                <span class="font-bold text-secondary">${crop.season}</span>
+            </div>
+        </div>
+    `).join('');
     }
 
     const cropSearchInput = document.getElementById('cropSearchInput');

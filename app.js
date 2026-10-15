@@ -1,691 +1,310 @@
-document.addEventListener('DOMContentLoaded', () => {
-    // element blendding 
-    const sliderN = document.getElementById('sliderN');
-    const sliderP = document.getElementById('sliderP');
-    const sliderK = document.getElementById('sliderK');
-    const sliderPH = document.getElementById('sliderPH');
-    const sliderTemp = document.getElementById('sliderTemp');
-    const sliderHumidity = document.getElementById('sliderHumidity');
-    const sliderRainfall = document.getElementById('sliderRainfall');
+/* AgriPredict – app script */
+(() => {
+  'use strict';
 
-    const valN = document.getElementById('val-n');
-    const valP = document.getElementById('val-p');
-    const valK = document.getElementById('val-k');
-    const valPH = document.getElementById('val-ph');
-    const valTemp = document.getElementById('val-temp');
-    const valHum = document.getElementById('val-hum');
-    const valRain = document.getElementById('val-rain');
+  const API = /localhost|127\.0\.0\.1/.test(location.hostname) ? '' : 'https://agri-predict-n3fa.onrender.com';
+  const HIST_KEY = 'agripredict_history';
+  const THEME_KEY = 'agripredict_theme';
+  const MAX_HISTORY = 30;
 
-    const recommendBtn = document.getElementById('recommend-btn');
-    const btnText = document.getElementById('btn-text');
-    const btnSpinner = document.getElementById('btn-spinner');
-    const btnIcon = document.getElementById('btn-icon');
+  const FIELDS = [
+    { id: 'N', label: 'Nitrogen (N)', unit: 'mg/kg', min: 0, max: 140, step: 1, def: 80, group: 'soil' },
+    { id: 'P', label: 'Phosphorus (P)', unit: 'mg/kg', min: 0, max: 145, step: 1, def: 40, group: 'soil' },
+    { id: 'K', label: 'Potassium (K)', unit: 'mg/kg', min: 0, max: 205, step: 1, def: 40, group: 'soil' },
+    { id: 'pH', label: 'Soil pH', unit: '', min: 0, max: 14, step: 0.1, def: 6.5, group: 'soil' },
+    { id: 'temp', label: 'Temperature', unit: '°C', min: 0, max: 50, step: 1, def: 24, group: 'env' },
+    { id: 'humidity', label: 'Humidity', unit: '%', min: 0, max: 100, step: 1, def: 82, group: 'env' },
+    { id: 'rainfall', label: 'Rainfall', unit: 'mm', min: 0, max: 300, step: 1, def: 230, group: 'env' },
+  ];
+  const PRESETS = {
+    paddy: { N: 80, P: 40, K: 40, pH: 6.5, temp: 24, humidity: 82, rainfall: 230 },
+    arid: { N: 40, P: 68, K: 80, pH: 7.3, temp: 19, humidity: 17, rainfall: 80 },
+    fruit: { N: 23, P: 133, K: 200, pH: 6.0, temp: 24, humidity: 82, rainfall: 70 },
+    coffee: { N: 101, P: 28, K: 30, pH: 6.8, temp: 25, humidity: 58, rainfall: 158 },
+  };
+  const TITLES = { dashboard: 'Predictor', analytics: 'Soil analytics', history: 'History', guide: 'Crop catalog' };
 
-    const resultsPlaceholder = document.getElementById('results-placeholder');
-    const resultsCard = document.getElementById('results-card');
-    const cropNameEl = document.getElementById('crop-name');
-    const cropDescEl = document.getElementById('cropDescription');
-    const confidenceScoreEl = document.getElementById('confidenceScore');
-    const confidenceBarEl = document.getElementById('confidenceBar');
-    const categoryBadge = document.getElementById('categoryBadge');
-    const cropSeasonEl = document.getElementById('cropSeason');
-    const cropSoilEl = document.getElementById('cropSoil');
-    const cropMarketTrendEl = document.getElementById('cropMarketTrend');
-    const proTipText = document.getElementById('proTipText');
-    const predictionModelTag = document.getElementById('predictionModelTag');
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const title = (s) => String(s || '').toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
+  const store = {
+    get(k) { try { return localStorage.getItem(k); } catch { return null; } },
+    set(k, v) { try { localStorage.setItem(k, v); } catch { /* ignore */ } },
+  };
 
-    const alternativesSection = document.getElementById('alternativesSection');
-    const alternativesList = document.getElementById('alternativesList');
+  let cropDataset = [];
+  let current = null;
+  let history = [];
+  try { history = JSON.parse(store.get(HIST_KEY) || '[]'); if (!Array.isArray(history)) history = []; } catch { history = []; }
 
-    const btnFetchWeather = document.getElementById('btnFetchWeather');
-    const weatherSummary = document.getElementById('weatherSummary');
-    const btnNewAnalysis = document.getElementById('btnNewAnalysis');
+  /* ---------- network ---------- */
+  async function http(path, opts = {}, ms = 20000) {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), ms);
+    try { return await fetch(API + path, { ...opts, signal: ctrl.signal }); }
+    finally { clearTimeout(t); }
+  }
 
-    const navTabs = document.querySelectorAll('.nav-tab');
-    const tabContents = document.querySelectorAll('.tab-content');
-    const headerTitle = document.getElementById('headerTitle');
-    const themeToggleBtn = document.getElementById('themeToggleBtn');
-    const globalSearchInput = document.getElementById('globalSearchInput');
+  function setStatus(state, text) { $('status').dataset.state = state; $('status-text').textContent = text; }
 
-    let currentPrediction = null;
-    let analyticsChart = null;
-    let historyLogs = JSON.parse(localStorage.getItem('agripredict_history') || '[]');
-    let cropDataset = [];
-
-    const API_BASE = (window.location.hostname.includes('localhost') || window.location.hostname.includes('127.0.0.1'))
-        ? ''
-        : 'https://agri-predict-n3fa.onrender.com';
-
-    // Initialize Canvas Weather Animation & ML Status Check
-    initWeatherCanvas();
-    checkMlBackendStatus();
-    loadCropsDataset();
-
-    async function loadCropsDataset() {
+  let checking = false;
+  async function checkServer() {
+    if (checking) return;
+    checking = true;
+    setStatus('wait', 'Waking up server…');
+    try {
+      for (let i = 0; i < 3; i++) {
         try {
-            const res = await fetch(`${API_BASE}/api/crops`);
-            if (res.ok) {
-                cropDataset = await res.json();
-                renderCropGuide();
-            }
-        } catch (e) {
-            console.error("Failed to load crops catalog from server:", e);
-        }
-    }
-
-    // api check
-    async function checkMlBackendStatus() {
-        const badge = document.getElementById('mlModelBadge');
-        try {
-            const res = await fetch(`${API_BASE}/api/status`);
-            if (res.ok) {
-                const data = await res.json();
-                if (badge && data.model_file && data.model_file !== 'None') {
-                    badge.innerHTML = `<span class="w-2.5 h-2.5 rounded-full bg-secondary animate-pulse"></span> ML Model: ${data.model_file}`;
-                    badge.classList.remove('hidden');
-                    badge.classList.add('inline-flex');
-                }
-            }
-        } catch (e) {
-            console.error("Backend status check failed: Cannot reach Python .pkl model server.", e);
-        }
-    }
-
-    // 2. Real-time Range Slider Event Syncing
-    function syncSliderDisplays() {
-        if (sliderN && valN) valN.innerHTML = `${sliderN.value} <span class="text-xs">mg/kg</span>`;
-        if (sliderP && valP) valP.innerHTML = `${sliderP.value} <span class="text-xs">mg/kg</span>`;
-        if (sliderK && valK) valK.innerHTML = `${sliderK.value} <span class="text-xs">mg/kg</span>`;
-        if (sliderPH && valPH) valPH.innerText = parseFloat(sliderPH.value).toFixed(1);
-        if (sliderTemp && valTemp) valTemp.innerHTML = `${sliderTemp.value} <span class="text-xs">°C</span>`;
-        if (sliderHumidity && valHum) valHum.innerHTML = `${sliderHumidity.value} <span class="text-xs">%</span>`;
-        if (sliderRainfall && valRain) valRain.innerHTML = `${sliderRainfall.value} <span class="text-xs">mm</span>`;
-    }
-
-    [sliderN, sliderP, sliderK, sliderPH, sliderTemp, sliderHumidity, sliderRainfall].forEach(slider => {
-        if (slider) {
-            slider.addEventListener('input', () => {
-                syncSliderDisplays();
-                updateDynamicProTip();
-            });
-        }
-    });
-
-    syncSliderDisplays();
-
-    // 3. Preset Scenarios Handler
-    const presets = {
-        paddy: { N: 80, P: 40, K: 40, pH: 6.5, temp: 24, humidity: 82, rainfall: 230 },
-        arid: { N: 40, P: 68, K: 80, pH: 7.3, temp: 19, humidity: 17, rainfall: 80 },
-        fruit: { N: 23, P: 133, K: 200, pH: 6.0, temp: 24, humidity: 82, rainfall: 70 },
-        coffee: { N: 101, P: 28, K: 30, pH: 6.8, temp: 25, humidity: 58, rainfall: 158 }
-    };
-
-    document.querySelectorAll('.preset-chip').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const key = btn.dataset.preset;
-            if (presets[key]) {
-                const p = presets[key];
-                sliderN.value = p.N;
-                sliderP.value = p.P;
-                sliderK.value = p.K;
-                sliderPH.value = p.pH;
-                sliderTemp.value = p.temp;
-                sliderHumidity.value = p.humidity;
-                sliderRainfall.value = p.rainfall;
-
-                syncSliderDisplays();
-                showToast(`Loaded scenario preset: ${btn.textContent.trim()}`);
-                executeRecommendation(true);
-            }
-        });
-    });
-
-    // 4. Trigger Recommendation Execution
-    if (recommendBtn) {
-        recommendBtn.addEventListener('click', () => {
-            executeRecommendation(true);
-        });
-    }
-
-    if (btnNewAnalysis) {
-        btnNewAnalysis.addEventListener('click', () => {
-            sliderN.value = 80;
-            sliderP.value = 40;
-            sliderK.value = 40;
-            sliderPH.value = 6.5;
-            sliderTemp.value = 24;
-            sliderHumidity.value = 82;
-            sliderRainfall.value = 230;
-            syncSliderDisplays();
-
-            if (resultsCard) resultsCard.classList.add('hidden');
-            if (resultsPlaceholder) resultsPlaceholder.classList.remove('hidden');
-            if (alternativesSection) alternativesSection.classList.add('hidden');
-
-            showToast('Form reset to default baseline parameters');
-        });
-    }
-
-    function getInputValues() {
-        return {
-            N: parseFloat(sliderN.value) || 0,
-            P: parseFloat(sliderP.value) || 0,
-            K: parseFloat(sliderK.value) || 0,
-            pH: parseFloat(sliderPH.value) || 7.0,
-            temp: parseFloat(sliderTemp.value) || 25,
-            humidity: parseFloat(sliderHumidity.value) || 60,
-            rainfall: parseFloat(sliderRainfall.value) || 100
-        };
-    }
-
-    async function executeRecommendation(animate = true) {
-        const inputData = getInputValues();
-
-        if (animate && recommendBtn) {
-            recommendBtn.disabled = true;
-            btnText.innerText = 'Evaluating ML Model...';
-            btnIcon.classList.add('hidden');
-            btnSpinner.classList.remove('hidden');
-        }
-
-        try {
-            const response = await fetch(`${API_BASE}/api/predict`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(inputData)
-            });
-
-            if (response.ok) {
-                const apiResult = await response.json();
-                if (apiResult.success && apiResult.crop) {
-                    const result = {
-                        topCrop: apiResult.crop_profile || {
-                            name: apiResult.crop.toUpperCase(),
-                            category: "ML Predicted Crop",
-                            season: "Optimal Season",
-                            soilType: "Suitable Soil",
-                            marketTrend: "+14.5%",
-                            description: `Machine Learning recommendation generated from model '${apiResult.model_source}'.`
-                        },
-                        confidenceScore: apiResult.confidenceScore || "98.0",
-                        alternatives: apiResult.alternatives || [],
-                        modelSource: apiResult.model_source
-                    };
-
-                    if (animate && recommendBtn) {
-                        setTimeout(() => {
-                            renderPredictionResult(result, inputData);
-                            resetRecommendBtn();
-                            showToast(`🤖 ML Model (.pkl): ${result.topCrop.name} (${result.confidenceScore}% Fit)`);
-                        }, 600);
-                    } else {
-                        renderPredictionResult(result, inputData);
-                    }
-                    return;
-                } else {
-                    throw new Error(apiResult.error || "Failed to get prediction from ML model");
-                }
-            } else {
-                const errData = await response.json().catch(() => ({}));
-                throw new Error(errData.error || `Server returned HTTP ${response.status}`);
-            }
-        } catch (err) {
-            console.error("Prediction Error:", err);
-            if (animate && recommendBtn) {
-                resetRecommendBtn();
-            }
-            showToast(`❌ Prediction Error: ${err.message || 'Unable to connect to Python .pkl model server.'}`);
-        }
-    }
-
-    function resetRecommendBtn() {
-        if (recommendBtn) {
-            recommendBtn.disabled = false;
-            btnText.innerText = 'Recommend Crop';
-            btnIcon.classList.remove('hidden');
-            btnSpinner.classList.add('hidden');
-        }
-    }
-
-    function renderPredictionResult(result, inputData) {
-        currentPrediction = result;
-        const crop = result.topCrop;
-
-        // Hide waiting placeholder, show active result card
-        if (resultsPlaceholder) resultsPlaceholder.classList.add('hidden');
-        if (resultsCard) {
-            resultsCard.classList.remove('hidden');
-            resultsCard.classList.remove('scale-95', 'opacity-0');
-            resultsCard.classList.add('scale-100', 'opacity-100');
-        }
-
-        if (cropNameEl) cropNameEl.innerText = crop.name;
-        if (cropDescEl) cropDescEl.innerText = crop.description;
-        if (confidenceScoreEl) confidenceScoreEl.innerText = `${result.confidenceScore}% Fit`;
-        if (confidenceBarEl) confidenceBarEl.style.width = `${result.confidenceScore}%`;
-
-        if (categoryBadge) categoryBadge.innerText = crop.category;
-        if (cropSeasonEl) cropSeasonEl.innerText = crop.season;
-        if (cropSoilEl) cropSoilEl.innerText = crop.soilType;
-        if (cropMarketTrendEl) cropMarketTrendEl.innerText = crop.marketTrend;
-
-        if (predictionModelTag) {
-            predictionModelTag.innerText = result.modelSource ? `🤖 Inferred via ${result.modelSource}` : 'Calculated via Agronomy Scoring Engine';
-        }
-
-        // Render alternative crop suggestions
-        if (alternativesSection && alternativesList) {
-            if (result.alternatives && result.alternatives.length > 0) {
-                alternativesSection.classList.remove('hidden');
-                alternativesList.innerHTML = result.alternatives.map(alt => `
-                <div class="glass-card p-md rounded-xl flex items-center justify-between hover:scale-[1.02] transition-transform">
-                    <div class="flex items-center gap-md">
-                        <div class="w-12 h-12 rounded-full bg-secondary/10 text-secondary flex items-center justify-center font-bold text-sm border border-secondary/20">
-                            ${alt.confidenceScore}%
-                        </div>
-                        <div>
-                            <h5 class="font-headline-md text-headline-md font-bold text-primary">${alt.name}</h5>
-                            <p class="text-xs text-on-surface-variant">${alt.category || 'Agricultural Crop'}</p>
-                        </div>
-                    </div>
-                    <span class="text-xs font-semibold text-secondary px-3 py-1 bg-secondary-fixed rounded-full">${alt.season || 'Seasonal'}</span>
-                </div>
-            `).join('');
-            } else {
-                alternativesSection.classList.add('hidden');
-            }
-        }
-
-        updateDynamicProTip(crop);
-        saveToHistory(inputData, crop, result.confidenceScore);
-
-        // Smooth scroll to results
-        if (resultsCard) {
-            resultsCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        }
-    }
-
-
-
-    function updateDynamicProTip(topCrop = null) {
-        const inputData = getInputValues();
-        let advice = "";
-
-        if (inputData.pH < 6.0) {
-            advice = `Your current soil pH of ${inputData.pH} is moderately acidic. Applying agricultural lime can enhance Nitrogen and Phosphorus uptake for ${topCrop ? topCrop.name : 'cereal crops'}.`;
-        } else if (inputData.pH > 7.5) {
-            advice = `Soil pH of ${inputData.pH} indicates alkaline conditions. Adding organic compost or sulfur can improve Micronutrient availability.`;
-        } else {
-            advice = `Your current pH of ${inputData.pH} is in the optimal neutral range. Nutrient absorption efficiency for Nitrogen and Potassium is operating at maximum potential.`;
-        }
-
-        if (proTipText) proTipText.innerText = advice;
-    }
-
-    // 5. Weather Fetching Simulation
-    if (btnFetchWeather) {
-        btnFetchWeather.addEventListener('click', () => {
-            const simulatedTemp = Math.floor(Math.random() * 15) + 18;
-            const simulatedHum = Math.floor(Math.random() * 35) + 55;
-            const simulatedRain = Math.floor(Math.random() * 180) + 80;
-
-            sliderTemp.value = simulatedTemp;
-            sliderHumidity.value = simulatedHum;
-            sliderRainfall.value = simulatedRain;
-
-            syncSliderDisplays();
-            showToast(`Fetched telemetry data: ${simulatedTemp}°C, ${simulatedHum}% Humidity, ${simulatedRain}mm Rain`);
-
-            if (weatherSummary) {
-                weatherSummary.innerText = `Simulated local micro-climate: ${simulatedTemp}°C, ${simulatedHum}% RH, ${simulatedRain}mm Precipitation`;
-            }
-        });
-    }
-
-    // 6. Navigation Tab Switching
-    navTabs.forEach(tab => {
-        tab.addEventListener('click', (e) => {
-            e.preventDefault();
-            const targetTab = tab.dataset.tab;
-
-            navTabs.forEach(t => {
-                t.classList.remove('active', 'text-secondary', 'font-bold', 'border-r-4', 'border-secondary', 'bg-surface-container-high');
-                t.classList.add('text-on-surface-variant');
-            });
-            tab.classList.remove('text-on-surface-variant');
-            tab.classList.add('active', 'text-secondary', 'font-bold', 'border-r-4', 'border-secondary', 'bg-surface-container-high');
-
-            tabContents.forEach(content => {
-                content.classList.remove('active');
-                if (content.id === `${targetTab}Tab`) {
-                    content.classList.add('active');
-                }
-            });
-
-            if (headerTitle) {
-                const titles = {
-                    dashboard: 'Predictor',
-                    analytics: 'Soil Analytics',
-                    history: 'History Log',
-                    guide: 'Crop Catalog'
-                };
-                headerTitle.innerText = titles[targetTab] || 'Predictor';
-            }
-
-            if (targetTab === 'analytics') {
-                renderAnalyticsChart();
-                renderNPKBalanceBars();
-            } else if (targetTab === 'history') {
-                renderHistoryTable();
-            } else if (targetTab === 'guide') {
-                renderCropGuide();
-            }
-        });
-    });
-
-    // 7. Chart.js Radar Chart
-    function renderAnalyticsChart() {
-        const ctx = document.getElementById('radarChart');
-        if (!ctx) return;
-
-        const inputDataObj = getInputValues();
-        const crop = (currentPrediction && currentPrediction.topCrop) ? currentPrediction.topCrop : (cropDataset[0] || {
-            name: "RICE",
-            category: "Cereal",
-            ideal: { N: 80, P: 40, K: 40, pH: 6.5, temp: 24, humidity: 82, rainfall: 230 }
-        });
-
-        const inputVals = [
-            inputDataObj.N,
-            inputDataObj.P,
-            inputDataObj.K,
-            inputDataObj.pH * 10,
-            inputDataObj.temp,
-            inputDataObj.humidity,
-            inputDataObj.rainfall / 2
-        ];
-
-        const idealVals = [
-            crop.ideal ? crop.ideal.N : 80,
-            crop.ideal ? crop.ideal.P : 40,
-            crop.ideal ? crop.ideal.K : 40,
-            crop.ideal ? crop.ideal.pH * 10 : 65,
-            crop.ideal ? crop.ideal.temp : 24,
-            crop.ideal ? crop.ideal.humidity : 82,
-            crop.ideal ? crop.ideal.rainfall / 2 : 115
-        ];
-
-        if (analyticsChart) {
-            analyticsChart.destroy();
-        }
-
-        analyticsChart = new Chart(ctx, {
-            type: 'radar',
-            data: {
-                labels: ['Nitrogen (N)', 'Phosphorus (P)', 'Potassium (K)', 'pH (x10)', 'Temp (°C)', 'Humidity (%)', 'Rainfall (/2)'],
-                datasets: [
-                    {
-                        label: 'Current Input Profile',
-                        data: inputVals,
-                        backgroundColor: 'rgba(17, 108, 74, 0.25)',
-                        borderColor: '#116c4a',
-                        borderWidth: 2,
-                        pointBackgroundColor: '#116c4a'
-                    },
-                    {
-                        label: `Optimal Target (${crop.name})`,
-                        data: idealVals,
-                        backgroundColor: 'rgba(1, 45, 29, 0.1)',
-                        borderColor: '#012d1d',
-                        borderWidth: 2,
-                        borderDash: [4, 4],
-                        pointBackgroundColor: '#012d1d'
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    r: {
-                        angleLines: { color: 'rgba(0,0,0,0.1)' },
-                        grid: { color: 'rgba(0,0,0,0.08)' },
-                        pointLabels: { font: { family: 'Inter', size: 11, weight: '600' } }
-                    }
-                },
-                plugins: {
-                    legend: { position: 'top', labels: { font: { family: 'Inter', weight: '600' } } }
-                }
-            }
-        });
-    }
-
-    function renderNPKBalanceBars() {
-        const input = getInputValues();
-
-        const nBar = document.getElementById('nBar');
-        const pBar = document.getElementById('pBar');
-        const kBar = document.getElementById('kBar');
-        const phBar = document.getElementById('phBar');
-        const phStatus = document.getElementById('phStatus');
-
-        if (nBar) nBar.style.width = `${Math.min(100, (input.N / 140) * 100)}%`;
-        if (pBar) pBar.style.width = `${Math.min(100, (input.P / 145) * 100)}%`;
-        if (kBar) kBar.style.width = `${Math.min(100, (input.K / 205) * 100)}%`;
-        if (phBar) phBar.style.width = `${Math.min(100, (input.pH / 14) * 100)}%`;
-        if (phStatus) phStatus.innerText = `pH ${input.pH.toFixed(1)}`;
-    }
-
-    // 8. History Log Storage & Table
-    function saveToHistory(inputs, topCrop, confidence) {
-        const logEntry = {
-            id: Date.now(),
-            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            inputs: inputs,
-            crop: topCrop.name,
-            confidence: confidence,
-            soilType: topCrop.soilType,
-            season: topCrop.season
-        };
-
-        historyLogs.unshift(logEntry);
-        if (historyLogs.length > 30) historyLogs.pop();
-        localStorage.setItem('agripredict_history', JSON.stringify(historyLogs));
-    }
-
-    function renderHistoryTable() {
-        const tableBody = document.getElementById('historyTableBody');
-        if (!tableBody) return;
-
-        if (historyLogs.length === 0) {
-            tableBody.innerHTML = `<tr><td colspan="6" class="text-center py-8 text-on-surface-variant">No analysis history recorded yet. Run a recommendation from the Dashboard!</td></tr>`;
+          const res = await http('/api/status', {}, 25000);
+          if (res.ok) {
+            const d = await res.json().catch(() => ({}));
+            setStatus('ok', d.model_file && d.model_file !== 'None' ? `Connected · ${d.model_file}` : 'Connected');
+            if (!cropDataset.length) loadCrops();
             return;
-        }
+          }
+        } catch { /* retry */ }
+      }
+      setStatus('err', 'Server unreachable · retry');
+    } finally { checking = false; }
+  }
 
-        tableBody.innerHTML = historyLogs.map(log => `
-        <tr class="hover:bg-surface-container-low/50 transition-colors">
-            <td class="py-3 px-4 font-mono text-xs text-on-surface-variant">${log.timestamp}</td>
-            <td class="py-3 px-4 font-bold text-primary">${log.crop}</td>
-            <td class="py-3 px-4"><span class="px-2.5 py-1 rounded-full bg-secondary-fixed text-primary font-bold text-xs">${log.confidence}% Fit</span></td>
-            <td class="py-3 px-4 text-xs font-medium">N:${log.inputs.N} P:${log.inputs.P} K:${log.inputs.K}</td>
-            <td class="py-3 px-4 text-xs font-medium">${log.inputs.pH}</td>
-            <td class="py-3 px-4 text-xs text-on-surface-variant">${log.inputs.temp}°C / ${log.inputs.humidity}% / ${log.inputs.rainfall}mm</td>
-        </tr>
-    `).join('');
+  async function loadCrops() {
+    try {
+      const res = await http('/api/crops', {}, 30000);
+      if (res.ok) { cropDataset = await res.json(); renderCatalog(); }
+    } catch { renderCatalog(); }
+  }
+
+  /* ---------- toast ---------- */
+  function toast(msg, warn = false) {
+    const t = document.createElement('div');
+    t.className = 'toast' + (warn ? ' warn' : '');
+    t.textContent = msg;
+    $('toastContainer').append(t);
+    setTimeout(() => t.remove(), 3500);
+  }
+
+  /* ---------- fields ---------- */
+  function buildFields() {
+    for (const f of FIELDS) {
+      const wrap = document.createElement('div');
+      wrap.className = 'field';
+      wrap.innerHTML = `<div class="lab"><label for="in-${f.id}">${f.label}</label><output for="in-${f.id}" id="out-${f.id}"></output></div>
+        <input type="range" id="in-${f.id}" min="${f.min}" max="${f.max}" step="${f.step}" value="${f.def}">`;
+      $(`fields-${f.group}`).append(wrap);
+      $(`in-${f.id}`).addEventListener('input', () => { syncField(f); updateTip(); });
+      syncField(f);
     }
+  }
+  function syncField(f) {
+    const el = $(`in-${f.id}`);
+    const v = Number(el.value);
+    el.style.setProperty('--p', `${((v - f.min) / (f.max - f.min)) * 100}%`);
+    $(`out-${f.id}`).innerHTML = `${f.step < 1 ? v.toFixed(1) : v}${f.unit ? `<small>${f.unit}</small>` : ''}`;
+  }
+  function setValues(vals) { for (const f of FIELDS) { $(`in-${f.id}`).value = vals[f.id]; syncField(f); } updateTip(); }
+  function getValues() { const o = {}; for (const f of FIELDS) o[f.id] = Number($(`in-${f.id}`).value); return o; }
 
-    // Export CSV Handler
-    const btnExportCSV = document.getElementById('btnExportCSV');
-    if (btnExportCSV) {
-        btnExportCSV.addEventListener('click', () => {
-            if (historyLogs.length === 0) {
-                showToast('No history records to export');
-                return;
-            }
+  /* ---------- prediction ---------- */
+  function setBusy(b) {
+    const btn = $('recommend-btn');
+    btn.disabled = b; btn.setAttribute('aria-busy', b);
+    $('btn-text').textContent = b ? 'Finding the best crop…' : 'Recommend crop';
+  }
 
-            let csvContent = "data:text/csv;charset=utf-8,Timestamp,Crop,Fit Score,N,P,K,pH,Temp,Humidity,Rainfall\n";
-            historyLogs.forEach(l => {
-                csvContent += `"${l.timestamp}","${l.crop}","${l.confidence}%",${l.inputs.N},${l.inputs.P},${l.inputs.K},${l.inputs.pH},${l.inputs.temp},${l.inputs.humidity},${l.inputs.rainfall}\n`;
-            });
+  async function recommend() {
+    if ($('recommend-btn').disabled) return;
+    const inputs = getValues();
+    setBusy(true);
+    try {
+      const res = await http('/api/predict', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(inputs) }, 60000);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.success || !data.crop) throw new Error(data.error || `Server returned ${res.status}`);
 
-            const encodedUri = encodeURI(csvContent);
-            const link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", `agripredict_history_${Date.now()}.csv`);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            showToast('CSV History Log downloaded');
-        });
+      const profile = data.crop_profile || cropDataset.find((c) => c.name.toLowerCase() === data.crop.toLowerCase()) || {};
+      const crop = { ...profile, name: profile.name || data.crop };
+      const conf = parseFloat(data.confidenceScore);
+      current = {
+        crop, inputs, conf: Number.isFinite(conf) ? conf : null,
+        source: data.model_source,
+        alts: (data.alternatives || []).map((a) => ({ ...a, conf: parseFloat(a.confidenceScore) })),
+      };
+      showResult();
+      saveHistory(inputs, crop.name, current.conf);
+      setStatus('ok', `Connected${data.model_source ? ` · ${data.model_source}` : ''}`);
+    } catch (e) {
+      toast(e.name === 'AbortError' ? 'The server took too long. It may be waking up, so try again in a few seconds.' : (e.message || 'Could not reach the server.'), true);
+      setStatus('err', 'Server unreachable · retry');
+    } finally { setBusy(false); }
+  }
+
+  function showResult() {
+    const { crop, conf, source, alts } = current;
+    $('results-placeholder').hidden = true;
+    $('results-card').hidden = false;
+    $('crop-name').textContent = title(crop.name);
+    $('cropDescription').textContent = crop.description || `Recommended by the ${source || 'prediction'} model for these conditions.`;
+    $('confidenceScore').textContent = conf == null ? '–' : `${conf.toFixed(1)}%`;
+    $('confidenceBar').style.width = `${conf ?? 0}%`;
+    $('categoryBadge').textContent = crop.category || '';
+    $('cropSeason').textContent = crop.season || '–';
+    $('cropSoil').textContent = crop.soilType || '–';
+    $('cropMarketTrend').textContent = crop.marketTrend || '–';
+    $('predictionModelTag').textContent = source ? `Model: ${source}` : '';
+
+    $('alternativesSection').hidden = !alts.length;
+    $('alternativesList').innerHTML = alts.map((a) => `
+      <div class="alt"><b>${Number.isFinite(a.conf) ? Math.round(a.conf) + '%' : '–'}</b>
+        <div><strong>${esc(title(a.name))}</strong><span class="muted small">${esc([a.category, a.season].filter(Boolean).join(' · '))}</span></div></div>`).join('');
+
+    updateTip();
+    $('results-card').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  function updateTip() {
+    const { pH } = getValues();
+    const name = current ? title(current.crop.name) : 'your crop';
+    $('proTipText').textContent =
+      pH < 6 ? `A pH of ${pH.toFixed(1)} is acidic. Agricultural lime can improve nitrogen and phosphorus uptake for ${name}.`
+      : pH > 7.5 ? `A pH of ${pH.toFixed(1)} is alkaline. Organic compost or sulfur can improve micronutrient availability for ${name}.`
+      : `A pH of ${pH.toFixed(1)} is in the neutral range, where nitrogen and potassium are taken up most efficiently.`;
+  }
+
+  function resetForm() {
+    setValues(Object.fromEntries(FIELDS.map((f) => [f.id, f.def])));
+    current = null;
+    $('results-card').hidden = true; $('results-placeholder').hidden = false; $('alternativesSection').hidden = true;
+    switchTab('dashboard');
+    toast('Inputs reset to defaults.');
+  }
+
+  /* ---------- analytics (no chart library needed) ---------- */
+  function renderAnalytics() {
+    const box = $('compareList');
+    const ideal = current && (current.crop.ideal || cropDataset.find((c) => c.name.toLowerCase() === current.crop.name.toLowerCase())?.ideal);
+    const vals = getValues();
+    $('analyticsLede').textContent = ideal
+      ? `Your current inputs compared with ideal conditions for ${title(current.crop.name)}.`
+      : 'Run a recommendation to compare your inputs with a crop’s ideal conditions. Until then, bars show where your inputs sit in each range.';
+
+    box.innerHTML = FIELDS.map((f) => {
+      const v = vals[f.id], span = f.max - f.min;
+      const pct = (x) => Math.min(100, Math.max(0, ((x - f.min) / span) * 100));
+      const fmt = (x) => `${f.step < 1 ? Number(x).toFixed(1) : Math.round(x)}${f.unit ? ' ' + f.unit : ''}`;
+      let state = '', marker = '', vs = `Yours ${fmt(v)}`;
+      if (ideal && ideal[f.id] != null) {
+        const d = v - ideal[f.id], tol = span * 0.12;
+        const k = Math.abs(d) <= tol ? 'ok' : d < 0 ? 'low' : 'high';
+        state = `<span class="state ${k}">${{ ok: 'On target', low: 'Too low', high: 'Too high' }[k]}</span>`;
+        marker = `<em style="left:calc(${pct(ideal[f.id])}% - 1px)" title="Ideal ${fmt(ideal[f.id])}"></em>`;
+        vs += ` · Ideal ${fmt(ideal[f.id])}`;
+      }
+      return `<div class="cmp"><div class="lab"><span>${f.label} ${state}</span><span class="vals">${vs}</span></div>
+        <div class="track" role="img" aria-label="${f.label}: ${fmt(v)}"><i style="width:${pct(v)}%"></i>${marker}</div></div>`;
+    }).join('') + (ideal ? '<p class="legend">The dark marker shows the ideal value. “On target” means within about 12% of the range.</p>' : '');
+  }
+
+  /* ---------- history ---------- */
+  const when = (ms) => new Date(ms).toLocaleString([], { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+
+  function saveHistory(inputs, crop, conf) {
+    history.unshift({ id: Date.now(), time: Date.now(), inputs, crop, confidence: conf });
+    history = history.slice(0, MAX_HISTORY);
+    store.set(HIST_KEY, JSON.stringify(history));
+  }
+
+  function renderHistory() {
+    $('btnExportCSV').disabled = $('btnClearHistory').disabled = !history.length;
+    $('histCount').textContent = history.length ? `${history.length} saved in this browser (latest ${MAX_HISTORY}).` : 'Past recommendations from this browser.';
+    $('historyTableBody').innerHTML = history.length ? history.map((h) => {
+      const i = h.inputs || {};
+      return `<tr><td>${when(h.time || h.id)}</td><td class="cn">${esc(title(h.crop))}</td>
+        <td>${h.confidence == null ? '–' : parseFloat(h.confidence).toFixed(1) + '%'}</td>
+        <td>${esc(i.N)}-${esc(i.P)}-${esc(i.K)}</td><td>${esc(i.pH)}</td><td>${esc(i.temp)}°C / ${esc(i.humidity)}% / ${esc(i.rainfall)} mm</td></tr>`;
+    }).join('') : '<tr><td class="empty" colspan="6">Nothing here yet. Run a recommendation on the Predictor tab.</td></tr>';
+  }
+
+  function exportCSV() {
+    const lines = ['Time,Crop,Match (%),N,P,K,pH,Temp (C),Humidity (%),Rainfall (mm)'];
+    for (const h of history) {
+      const i = h.inputs || {};
+      lines.push([new Date(h.time || h.id).toISOString(), `"${String(h.crop).replace(/"/g, '""')}"`, h.confidence ?? '', i.N, i.P, i.K, i.pH, i.temp, i.humidity, i.rainfall].join(','));
     }
+    const url = URL.createObjectURL(new Blob(['\ufeff' + lines.join('\n')], { type: 'text/csv;charset=utf-8' }));
+    const a = document.createElement('a');
+    a.href = url; a.download = `agripredict_history_${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.append(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    toast('History exported.');
+  }
 
-    // 9. Crop Guide / Catalog
-    function renderCropGuide(filterText = '') {
-        const grid = document.getElementById('cropCatalogGrid');
-        if (!grid) return;
+  /* ---------- catalog ---------- */
+  function renderCatalog() {
+    const q = $('cropSearchInput').value.toLowerCase().trim();
+    const list = cropDataset.filter((c) => [c.name, c.category, c.soilType].some((x) => String(x || '').toLowerCase().includes(q)));
+    $('catalogCount').textContent = cropDataset.length ? `Ideal growing conditions for ${cropDataset.length} crops.` : 'Ideal growing conditions for each supported crop.';
+    $('cropCatalogGrid').innerHTML = list.length ? list.map((c) => {
+      const i = c.ideal || {};
+      return `<article class="crop"><div class="row between"><h4>${esc(title(c.name))}</h4><span class="tag">${esc(c.category)}</span></div>
+        <p>${esc(c.description)}</p>
+        <dl class="specs"><div><dt>N-P-K</dt><dd>${esc(i.N)}-${esc(i.P)}-${esc(i.K)}</dd></div><div><dt>pH</dt><dd>${esc(i.pH)}</dd></div>
+        <div><dt>Temp / Humidity</dt><dd>${esc(i.temp)}°C / ${esc(i.humidity)}%</dd></div><div><dt>Rainfall</dt><dd>${esc(i.rainfall)} mm</dd></div></dl>
+        <footer><span class="muted">${esc(c.soilType)}</span><b>${esc(c.season)}</b></footer></article>`;
+    }).join('') : `<p class="emptyblock">${cropDataset.length ? 'No crops match that filter.' : 'The catalog loads once the server is connected.'}</p>`;
+  }
 
-        const filtered = cropDataset.filter(c =>
-            c.name.toLowerCase().includes(filterText.toLowerCase()) ||
-            c.category.toLowerCase().includes(filterText.toLowerCase()) ||
-            c.soilType.toLowerCase().includes(filterText.toLowerCase())
-        );
+  /* ---------- tabs & theme ---------- */
+  function switchTab(name) {
+    document.querySelectorAll('[data-tab]').forEach((b) => b.toggleAttribute('aria-current', b.dataset.tab === name));
+    document.querySelectorAll('.tab').forEach((s) => {
+      const on = s.id === `${name}Tab`;
+      s.hidden = !on; s.classList.toggle('active', on);
+    });
+    $('headerTitle').textContent = TITLES[name];
+    document.title = `AgriPredict – ${TITLES[name]}`;
+    if (name === 'analytics') renderAnalytics();
+    if (name === 'history') renderHistory();
+    if (name === 'guide') renderCatalog();
+    window.scrollTo({ top: 0 });
+  }
 
-        grid.innerHTML = filtered.map(crop => `
-        <div class="glass-card p-md rounded-xl flex flex-col justify-between hover:scale-[1.01] transition-transform">
-            <div>
-                <div class="flex justify-between items-start mb-2">
-                    <h4 class="font-headline-md text-headline-md font-bold text-primary">${crop.name}</h4>
-                    <span class="text-xs px-2.5 py-1 bg-tertiary-fixed text-primary font-bold rounded-full">${crop.category}</span>
-                </div>
-                <p class="text-xs text-on-surface-variant mb-4">${crop.description}</p>
-                
-                <div class="grid grid-cols-2 gap-2 text-xs mb-4">
-                    <div class="bg-surface-container-low p-2 rounded">
-                        <span class="text-outline block">Ideal N-P-K</span>
-                        <span class="font-bold text-primary">${crop.ideal.N}-${crop.ideal.P}-${crop.ideal.K}</span>
-                    </div>
-                    <div class="bg-surface-container-low p-2 rounded">
-                        <span class="text-outline block">Ideal pH</span>
-                        <span class="font-bold text-primary">${crop.ideal.pH}</span>
-                    </div>
-                    <div class="bg-surface-container-low p-2 rounded">
-                        <span class="text-outline block">Temp & Humidity</span>
-                        <span class="font-bold text-primary">${crop.ideal.temp}°C / ${crop.ideal.humidity}%</span>
-                    </div>
-                    <div class="bg-surface-container-low p-2 rounded">
-                        <span class="text-outline block">Rainfall</span>
-                        <span class="font-bold text-primary">${crop.ideal.rainfall} mm</span>
-                    </div>
-                </div>
-            </div>
+  function applyTheme(dark, save) {
+    document.documentElement.classList.toggle('dark', dark);
+    const b = $('themeToggleBtn');
+    b.innerHTML = `<svg class="ic"><use href="#${dark ? 'i-sun' : 'i-moon'}"/></svg>`;
+    b.setAttribute('aria-label', dark ? 'Switch to light theme' : 'Switch to dark theme');
+    if (save) store.set(THEME_KEY, dark ? 'dark' : 'light');
+  }
 
-            <div class="border-t border-outline-variant/30 pt-3 flex justify-between items-center text-xs">
-                <span class="text-on-surface-variant font-medium">🌱 ${crop.soilType}</span>
-                <span class="font-bold text-secondary">${crop.season}</span>
-            </div>
-        </div>
-    `).join('');
-    }
+  /* ---------- init ---------- */
+  buildFields();
+  updateTip();
+  renderHistory();
+  applyTheme(document.documentElement.classList.contains('dark'), false);
 
-    const cropSearchInput = document.getElementById('cropSearchInput');
-    if (cropSearchInput) {
-        cropSearchInput.addEventListener('input', (e) => {
-            renderCropGuide(e.target.value);
-        });
-    }
+  $('recommend-btn').addEventListener('click', recommend);
+  $('btnNewAnalysis').addEventListener('click', resetForm);
+  $('btnCompareTab').addEventListener('click', () => switchTab('analytics'));
+  $('status').addEventListener('click', checkServer);
+  $('themeToggleBtn').addEventListener('click', () => applyTheme(!document.documentElement.classList.contains('dark'), true));
+  document.querySelectorAll('[data-tab]').forEach((b) => b.addEventListener('click', () => switchTab(b.dataset.tab)));
+  document.querySelectorAll('.chip').forEach((b) => b.addEventListener('click', () => {
+    setValues(PRESETS[b.dataset.preset]);
+    toast(`Loaded example: ${b.textContent.trim()}`);
+    recommend();
+  }));
+  $('btnExportCSV').addEventListener('click', exportCSV);
+  $('btnClearHistory').addEventListener('click', () => {
+    if (!confirm('Delete all saved recommendations? This cannot be undone.')) return;
+    history = []; store.set(HIST_KEY, '[]'); renderHistory();
+  });
+  $('cropSearchInput').addEventListener('input', renderCatalog);
+  $('globalSearchInput').addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter' || !e.target.value.trim()) return;
+    $('cropSearchInput').value = e.target.value.trim();
+    switchTab('guide');
+    e.target.value = '';
+  });
 
-    if (globalSearchInput) {
-        globalSearchInput.addEventListener('input', (e) => {
-            const query = e.target.value;
-            if (query.trim().length > 0) {
-                const guideTabBtn = document.querySelector('[data-tab="guide"]');
-                if (guideTabBtn) guideTabBtn.click();
-                if (cropSearchInput) cropSearchInput.value = query;
-                renderCropGuide(query);
-            }
-        });
-    }
-
-    // 10. Weather Canvas Radar Simulation Animation
-    function initWeatherCanvas() {
-        const canvas = document.getElementById('weatherCanvas');
-        if (!canvas) return;
-        const ctx = canvas.getContext('2d');
-
-        function resize() {
-            canvas.width = canvas.parentElement.clientWidth;
-            canvas.height = canvas.parentElement.clientHeight;
-        }
-        resize();
-        window.addEventListener('resize', resize);
-
-        let angle = 0;
-        function draw() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            const centerX = canvas.width / 2;
-            const centerY = canvas.height / 2;
-            const radius = Math.min(centerX, centerY) - 10;
-
-            ctx.strokeStyle = 'rgba(17, 108, 74, 0.15)';
-            ctx.lineWidth = 1;
-
-            for (let r = 20; r <= radius; r += 25) {
-                ctx.beginPath();
-                ctx.arc(centerX, centerY, r, 0, Math.PI * 2);
-                ctx.stroke();
-            }
-
-            ctx.beginPath();
-            ctx.moveTo(centerX, centerY);
-            ctx.lineTo(centerX + Math.cos(angle) * radius, centerY + Math.sin(angle) * radius);
-            ctx.strokeStyle = 'rgba(17, 108, 74, 0.6)';
-            ctx.lineWidth = 2;
-            ctx.stroke();
-
-            ctx.beginPath();
-            ctx.moveTo(centerX, centerY);
-            ctx.arc(centerX, centerY, radius, angle - 0.4, angle);
-            ctx.closePath();
-            ctx.fillStyle = 'rgba(17, 108, 74, 0.08)';
-            ctx.fill();
-
-            angle += 0.02;
-            requestAnimationFrame(draw);
-        }
-
-        draw();
-    }
-
-    // Theme Toggle Handler
-    if (themeToggleBtn) {
-        themeToggleBtn.addEventListener('click', () => {
-            document.documentElement.classList.toggle('dark');
-            const isDark = document.documentElement.classList.contains('dark');
-            showToast(`Switched to ${isDark ? 'Dark' : 'Light'} Mode`);
-        });
-    }
-
-    // Helper Toast Function
-    function showToast(message) {
-        let container = document.getElementById('toastContainer');
-        if (!container) {
-            container = document.createElement('div');
-            container.id = 'toastContainer';
-            document.body.appendChild(container);
-        }
-
-        const toast = document.createElement('div');
-        toast.className = 'toast';
-        toast.innerHTML = `<span class="material-symbols-outlined text-base">info</span> ${message}`;
-        container.appendChild(toast);
-
-        setTimeout(() => {
-            toast.style.opacity = '0';
-            toast.style.transform = 'translateX(100%)';
-            toast.style.transition = 'all 0.3s ease';
-            setTimeout(() => toast.remove(), 300);
-        }, 2500);
-    }
-});
+  checkServer();
+})();
